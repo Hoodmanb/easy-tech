@@ -2,15 +2,15 @@
     "version": 2,
     "builds": [
         {
-            "src": "backend/app.js",
-            "use": "@vercel/node"
-        },
-        {
             "src": "client/package.json",
             "use": "@vercel/static-build",
             "config": {
                 "distDir": "client/build"
             }
+        },
+        {
+            "src": "backend/app.js",
+            "use": "@vercel/node"
         }
     ],
     "routes": [
@@ -19,11 +19,15 @@
             "dest": "/backend/app.js"
         },
         {
+            "src": "/api/(.*)",
+            "dest": "/backend/app.js"
+        },
+        {
             "handle": "filesystem"
         },
         {
             "src": "/(.*)",
-            "dest": "client/build/index.html"
+            "dest": "/client/build/index.html"
         }
     ]
 }
