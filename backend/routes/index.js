@@ -1,9 +1,12 @@
-var express = require('express');
-var router = express.Router();
+const categoryRouter = require("./category")
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.redirect("/catalog");
-});
+const machineRouter = require("./machine")
 
-module.exports = router;
+const powerRouter = require("./power")
+
+const tagRouter = require("./tag")
+
+module.exports = {
+    categoryRouter, machineRouter,
+    powerRouter, tagRouter
+}
