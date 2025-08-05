@@ -1,50 +1,57 @@
 const Machine = require("../models/machine");
 const cloudinary = require("../utils/cloudinary");
 const fs = require("fs");
-
-const uploadMediaToCloudinary = async (files = []) => {
-    const images = [];
-    const videos = [];
-
-    for (const file of files) {
-        const isVideo = file.mimetype.startsWith("video/");
-        const type = isVideo ? "video" : "image";
-
-        const options = {
-            resource_type: type,
-            folder: `machines/${type}s`,
-            quality: "auto",
-            fetch_format: "auto",
-            ...(isVideo && { bit_rate: "800k", format: "mp4" }),
-        };
-
-        const uploaded = await cloudinary.uploader.upload(file.path, options);
-        fs.unlinkSync(file.path);
-
-        const media = {
-            url: uploaded.secure_url,
-            publicId: uploaded.public_id,
-        };
-
-        isVideo ? videos.push(media) : images.push(media);
-    }
-
-    return { images, videos };
-};
+const compressAndOverwrite = require("../utils/overwriteWithCompressed")
 
 // CREATE
 exports.createMachine = async (req, res) => {
     try {
-        const { images, videos } = await uploadMediaToCloudinary(req.files || []);
+        console.log(req.body)
+        const { images = [], videos = [] } = req.body
+
+        const imageResults = await Promise.all(
+            images.map(async img => {
+                const res = await compressAndOverwrite({
+                    url: img.url,
+                    publicId: img.publicId,
+                    resource_type: "image",
+                });
+                console.log("nwigiri", res.success)
+                return res.success ? {
+                    url: res.result.secure_url,
+                    publicId: res.result.public_id,
+                } : null;
+            })
+        );
+        const videoResults = await Promise.all(
+            videos.map(async vid => {
+                const res = await compressAndOverwrite({
+                    url: vid.url,
+                    publicId: vid.publicId,
+                    resource_type: "video",
+                });
+                console.log("nwigiri", res.success)
+                return res.success ? {
+                    url: res.result.secure_url,
+                    publicId: res.result.public_id,
+                } : null;
+            })
+        );
 
         const machineData = {
             ...req.body,
-            media: { images, videos },
+            media: {
+                images: imageResults.filter(Boolean),
+                videos: videoResults.filter(Boolean),
+            },
         };
-
+        console.info(true, machineData)
         const machine = new Machine(machineData);
         const saved = await machine.save();
-        res.status(201).json(saved);
+        res.status(201).json({
+            message: "created successfully",
+            data: saved,
+        });
     } catch (error) {
         console.error("❌ Create error:", error);
         res.status(500).json({ message: "Failed to create machine", error });
@@ -55,7 +62,7 @@ exports.createMachine = async (req, res) => {
 exports.getMachines = async (req, res) => {
     try {
         const machines = await Machine.find();
-        res.status(200).json(machines);
+        res.status(200).json({ message: "retrieved successfully", machines });
     } catch (error) {
         res.status(500).json({ message: "Fetch failed", error });
     }

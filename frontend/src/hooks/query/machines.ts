@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axiosInstance from "../axios";
 import { Machine } from "@/types";
+import uploadToCloudinary from "@/utils/cloudinaryUpload";
+import { cleanPayload } from "@/utils/cleanPayload";
 
 export const useGetMachines = () => {
   const [machine, setMachine] = useState<Machine[]>([]);
@@ -12,7 +14,7 @@ export const useGetMachines = () => {
     try {
       const response = await axiosInstance("/api/machine");
       if (response.data?.message === "retrieved successfully") {
-        setMachine(response.data.data);
+        setMachine(response.data.machines);
       }
     } catch (err) {
       console.error(err);
@@ -29,8 +31,6 @@ export const useGetMachines = () => {
   return { machine, isLoading, error, refetch: fetchMachines };
 };
 
-
-
 export const useCreateMachine = () => {
   const [isLoading, setLoading] = useState(false);
 
@@ -38,9 +38,28 @@ export const useCreateMachine = () => {
     setLoading(true);
 
     try {
-      const response = await axiosInstance.post("/api/machine", machineData);
+      const imageUploads = await Promise.all(
+        machineData.media?.images.map((file) =>
+          uploadToCloudinary(file.file, "image")
+        )
+      );
+
+      const videoUploads = await Promise.all(
+        machineData.media?.videos.map((file) =>
+          uploadToCloudinary(file.file, "video")
+        )
+      );
+      console.log(machineData)
+      const payload = {
+        ...machineData,
+        images: imageUploads,
+        videos: videoUploads,
+      }
+      const response = await axiosInstance.post("/api/machine", cleanPayload(payload));
+
       if (response.data?.message === "created successfully") {
-        return response.data.data; // In case caller wants the result
+        console.log(response.data.data)
+        return response.data.message;
       } else {
         throw new Error(response.data?.message || "Failed to create machine");
       }
@@ -55,16 +74,15 @@ export const useCreateMachine = () => {
   return { createMachine, isLoading };
 };
 
-
-
 export const useUpdateMachine = () => {
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<any>(null);
 
   const updateMachine = async (id: string, updatedData: Partial<Machine>) => {
     setLoading(true);
+    updatedData._id = ""
     try {
-      const response = await axiosInstance.put(`/api/machine/${id}`, updatedData);
+      const response = await axiosInstance.put(`/api/machine/${id}`, cleanPayload(updatedData));
       if (response.data?.message === "updated successfully") {
         return response.data.data;
       }

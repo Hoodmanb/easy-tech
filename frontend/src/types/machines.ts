@@ -1,20 +1,22 @@
 export interface Image {
     url: string;
     publicId: string;
+    file: File;
 }
 
 export interface Video {
     url: string;
     publicId: string;
+    file: File;
 }
 
 export interface Machine {
-    _id: string;
+    _id?: string;
     name: string;
     category: string;
     shortDescription: string;
     description: string;
-    powerSource: 'Electric' | 'Fuel-powered' | 'Manual' | 'Hybrid';
+    powerSource: 'Electric' | 'Fuel-powered' | 'Manual' | 'Hybrid' | '';
     capacity: string;
     media: {
         images: Image[];
@@ -28,8 +30,25 @@ export interface Machine {
         materials: string;
         [key: string]: string | undefined;
     }
-    createdAt?: string;
-    updatedAt?: string;
-    price?: string;
     __v?: number;
+}
+
+
+export const machineDefaultData: Machine = {
+    name: "",
+    description: "",
+    shortDescription: "",
+    powerSource: "",
+    capacity: "",
+    specifications: {
+        dimensions: "",
+        weight: "",
+        materials: "",
+    },
+    media: {
+        images: [],
+        videos: [],
+    },
+    featured: false,
+    category: "",
 }

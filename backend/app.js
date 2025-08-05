@@ -11,14 +11,15 @@ const { machineRouter, tagRouter, categoryRouter, powerRouter } = require("./rou
 
 const app = express();
 
-const corsOptions = {
-  origin: 'http://localhost:3000',
-  methods: 'GET,POST'
-};
+// const corsOptions = {
+//   origin: 'http://localhost:3000',
+//   methods: 'GET,POST'
+// };
 
 connectDB()
 
-app.use(cors(corsOptions));
+// app.use(cors(corsOptions));
+app.use(cors())
 
 app.use(logger('dev'));
 app.use(express.json());

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import type { Machine } from "@/types/index";
+import { useUpdateMachine } from "@/hooks/query/machines";
 
 
 interface MachineDataFormProps {
@@ -26,6 +27,8 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
       materials: "",
     }
   );
+
+  const { updateMachine } = useUpdateMachine()
 
   const {
     register,
@@ -45,7 +48,6 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
         weight: "",
         materials: "",
       },
-      price: machine?.price || "",
       featured: machine?.featured || false,
       category: machine?.category || "",
       media: {
@@ -97,11 +99,11 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
     });
   };
 
-  const onSubmit = (data: Machine) => {
-    onSave({
-      ...data,
-      specifications,
-    });
+  const onSubmit = async (data: Machine) => {
+    const res = await updateMachine(
+      data._id, data
+    )
+    console.log(res)
   };
 
   return (
@@ -156,7 +158,9 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
                 <Label htmlFor="shortDescription">Short Description *</Label>
                 <Input
                   id="shortDescription"
-                  {...register("shortDescription", { required: "Short description is required" })}
+                  {...register("shortDescription"
+                    // , { required: "Short description is required" }
+                  )}
                   placeholder="Brief description for listings"
                 />
                 {errors.shortDescription && (
@@ -168,7 +172,9 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
                 <Label htmlFor="description">Full Description *</Label>
                 <Textarea
                   id="description"
-                  {...register("description", { required: "Description is required" })}
+                  {...register("description"
+                    // , { required: "Description is required" }
+                  )}
                   placeholder="Detailed machine description"
                   rows={4}
                 />
@@ -186,7 +192,7 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="powerSource">Power Source *</Label>
+                  <Label htmlFor="powerSource">Power Source </Label>
                   <Select onValueChange={(value) => setValue("powerSource", value as any)} defaultValue={machine?.powerSource}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select power source" />
@@ -201,10 +207,12 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="capacity">Capacity *</Label>
+                  <Label htmlFor="capacity">Capacity</Label>
                   <Input
                     id="capacity"
-                    {...register("capacity", { required: "Capacity is required" })}
+                    {...register("capacity"
+                      // , { required: "Capacity is required" }
+                    )}
                     placeholder="e.g., 50 tons, 1000 kg/hr"
                   />
                   {errors.capacity && (
@@ -216,9 +224,6 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <Label>Detailed Specifications</Label>
-                  <Button type="button" variant="secondary" size="sm" onClick={addSpecification}>
-                    Add Specification
-                  </Button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
@@ -232,16 +237,6 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
                           placeholder={`Enter ${key}`}
                         />
                       </div>
-                      {!["dimensions", "weight", "materials"].includes(key) && (
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => removeSpecification(key)}
-                        >
-                          Remove
-                        </Button>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -252,18 +247,7 @@ const MachineDataForm = ({ machine, onSave, onCancel, isLoading }: MachineDataFo
 
             {/* Pricing and Features */}
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Pricing and Features</h3>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="price">Price</Label>
-                  <Input
-                    id="price"
-                    {...register("price")}
-                    placeholder="e.g., $150,000 - $200,000"
-                  />
-                </div>
-
                 <div className="flex items-center space-x-2">
                   <Switch
                     id="featured"
